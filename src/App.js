@@ -1,19 +1,58 @@
 import React, { Component } from 'react';
+import axios from 'axios';
 import './App.css';
 
 class Location extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            zipCode: '',
+            weatherCondition: ''
+        };
+
+        this.handleChange = this.handleChange.bind(this);
+        this.handleSubmit = this.handleSubmit.bind(this);
+    }
+
+    handleChange(event) {
+        this.setState({zipCode: event.target.value});
+    }
+
+    handleSubmit(event) {
+        console.log('A zip code was submitted: ' + this.state.zipCode);
+        event.preventDefault();
+    }
+
+    componentDidMount() {
+        let _this = this;
+        this.serverRequest =
+            axios
+                .get("https://query.yahooapis.com/v1/public/yql?q=select%20item.condition.text%20from%20weather.forecast%20where%20woeid%20in%20(select%20woeid%20from%20geo.places(1)%20where%20text%3D%2294105%22)&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys")
+                .then(function(results) {
+                    _this.setState({
+                        weatherCondition: results.data.query.results.channel.item.condition.text
+                    });
+                });
+    }
+
+    componentWillUnmount() {
+        this.serverRequest.abort();
+    }
+
     render() {
         return (
             <div>
                 <label htmlFor="getZipForm">Enter Zip Code</label>
-                <form name="getZipForm" action="/" method="post">
+                <form name="getZipForm" onSubmit={this.handleSubmit}>
                     <input
                         name="getZipInput"
                         type="number"
                         inputMode="numeric"
                         autoComplete="postal-code"
-                        max="5"
-                        size="50"/>
+                        size="50"
+                        placeholder="e.g., 99999"
+                        value={this.state.zipCode}
+                        onChange={this.handleChange} />
                 </form>
             </div>
         );
