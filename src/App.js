@@ -13,12 +13,57 @@ class Location extends Component {
             zipCode: '',
             temperature: '',
             windSpeed: '',
+            windChill: '',
             humidity: '',
+            feelsLike: '',
             weatherCondition: ''
         };
 
+        this.getFeelsLikeTemp = this.getFeelsLikeTemp.bind(this);
         this.handleChange = this.handleChange.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
+    }
+
+    // Heat index equation: http://www.wpc.ncep.noaa.gov/html/heatindex_equation.shtml
+    getFeelsLikeTemp() {
+        let temperature = this.state.temperature;
+        let humidity = this.state.humidity;
+        let windChill = this.state.windChill;
+        let heatIndex = -42.379 + 2.04901523*temperature + 10.14333127*humidity - .22475541*temperature*humidity - .00683783*temperature*temperature - .05481717*humidity*humidity + .00122874*temperature*temperature*humidity + .00085282*temperature*humidity*humidity - .00000199*temperature*temperature*humidity*humidity;
+        let heatIndexAdjustment = 0;
+        let feelsLike = 0;
+
+        if ( temperature <= 112 ) {
+
+            if ( temperature >= 80 ) {
+
+                if ( humidity < 13 ) {
+                    heatIndexAdjustment = ( ( 13 - humidity )/4 ) * Math.sqrt( ( 17 - Math.abs( temperature-95 ) ) / 17 );
+                    heatIndex -= heatIndexAdjustment;
+                }
+
+                if ( humidity > 85 && temperature <= 87 ) {
+                    heatIndexAdjustment = ( ( humidity - 85 ) / 10 ) * ( ( 87-temperature ) / 5 );
+                    heatIndex += heatIndexAdjustment;
+                }
+
+                if ( heatIndex < 80 ) {
+                    heatIndex = 0.5 * ( temperature + 61 + ( ( temperature-68 ) * 1.2) + ( humidity * 0.094 ) );
+                }
+
+                feelsLike = heatIndex;
+
+            }
+
+            else {
+
+                feelsLike = windChill;
+
+            }
+
+        }
+
+        return feelsLike;
     }
 
     handleChange(event) {
@@ -30,6 +75,7 @@ class Location extends Component {
         let _this = this;
         let inputField = document.getElementById("getZipInput");
         inputField.blur();
+
         this.serverRequest =
             axios
                 .get(url)
@@ -42,8 +88,12 @@ class Location extends Component {
                         country: results.data.query.results.channel.location.country,
                         temperature: results.data.query.results.channel.item.condition.temp,
                         windSpeed: results.data.query.results.channel.wind.speed,
+                        windChill: results.data.query.results.channel.wind.chill,
                         humidity: results.data.query.results.channel.atmosphere.humidity,
                         weatherCondition: results.data.query.results.channel.item.condition.text
+                    });
+                    _this.setState({
+                        feelsLike: Math.round(_this.getFeelsLikeTemp())
                     });
                 })
                 .catch(function (error) {
@@ -78,8 +128,10 @@ class Location extends Component {
                     region={this.state.region}
                     country={this.state.country}
                     temperature={this.state.temperature}
+                    windChill={this.state.windChill}
                     windSpeed={this.state.windSpeed}
                     humidity={this.state.humidity}
+                    feelsLike={this.state.feelsLike}
                     weatherCondition={this.state.weatherCondition} />
                 <Recommendations
                     loadingData={this.state.loadingData}
@@ -99,7 +151,7 @@ class Conditions extends Component {
             <div>
                 <h2>Conditions!</h2>
                 <p>The weather is currently {this.props.weatherCondition.toLowerCase()} in {this.props.city}, {this.props.region}, {this.props.country}.</p>
-                <p>Temperature {this.props.temperature} F</p>
+                <p>Temperature {this.props.temperature}&deg; F (feels like {this.props.feelsLike}&deg; F)</p>
                 <p>Wind Speed: {this.props.windSpeed} mph</p>
                 <p>Humidity: {this.props.humidity}%</p>
             </div>
