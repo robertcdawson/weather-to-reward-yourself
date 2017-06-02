@@ -227,7 +227,7 @@ class WeatherTreatYourself extends Component {
     render() {
         return (
             <div className="App">
-                <h1>Weather to Reward</h1>
+                <h1>Weather to Reward Yourself</h1>
                 <Location />
             </div>
         );
