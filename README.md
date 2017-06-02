@@ -19,3 +19,8 @@ Enjoy!
 1. Download or clone this repo.
 1. Go to root folder in Terminal.
 1. Run `npm start`.
+
+##### TODO
+
+* Add recommendations.
+* Make it pretty.
