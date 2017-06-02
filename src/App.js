@@ -6,7 +6,8 @@ class Location extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            loadingData: true,
+            formSubmitted: false,
+            dataLoaded: false,
             city: '',
             region: '',
             country: '',
@@ -76,13 +77,17 @@ class Location extends Component {
         let inputField = document.getElementById("getZipInput");
         inputField.blur();
 
+        this.setState({
+            formSubmitted: true
+        });
+
         this.serverRequest =
             axios
                 .get(url)
                 .then(function (results) {
                     console.log(results);
                     _this.setState({
-                        loadingData: false,
+                        dataLoaded: true,
                         city: results.data.query.results.channel.location.city,
                         region: results.data.query.results.channel.location.region,
                         country: results.data.query.results.channel.location.country,
@@ -123,7 +128,8 @@ class Location extends Component {
                         onChange={this.handleChange}/>
                 </form>
                 <Conditions
-                    loadingData={this.state.loadingData}
+                    formSubmitted={this.state.formSubmitted}
+                    dataLoaded={this.state.dataLoaded}
                     city={this.state.city}
                     region={this.state.region}
                     country={this.state.country}
@@ -134,7 +140,8 @@ class Location extends Component {
                     feelsLike={this.state.feelsLike}
                     weatherCondition={this.state.weatherCondition} />
                 <Recommendations
-                    loadingData={this.state.loadingData}
+                    formSubmitted={this.state.formSubmitted}
+                    dataLoaded={this.state.dataLoaded}
                     weatherCondition={this.state.weatherCondition} />
             </div>
         );
@@ -147,13 +154,29 @@ class Conditions extends Component {
         if (!this.props.weatherCondition) {
             return null;
         }
+
+        let formSubmitted = this.props.formSubmitted;
+        let dataLoaded = this.props.dataLoaded;
+        let content = null;
+
+        if ( formSubmitted ) {
+            content = <p>Loading weather conditions...</p>;
+
+            if ( dataLoaded ) {
+                content = <div>
+                    <h2>Conditions!</h2>
+                    <p>The weather is currently {this.props.weatherCondition.toLowerCase()} in {this.props.city}, {this.props.region}, {this.props.country}.</p>
+                    <p>Temperature {this.props.temperature}&deg; F (feels like {this.props.feelsLike}&deg; F)</p>
+                    <p>Wind Speed: {this.props.windSpeed} mph</p>
+                    <p>Humidity: {this.props.humidity}%</p>
+                </div>;
+            }
+
+        }
+
         return (
             <div>
-                <h2>Conditions!</h2>
-                <p>The weather is currently {this.props.weatherCondition.toLowerCase()} in {this.props.city}, {this.props.region}, {this.props.country}.</p>
-                <p>Temperature {this.props.temperature}&deg; F (feels like {this.props.feelsLike}&deg; F)</p>
-                <p>Wind Speed: {this.props.windSpeed} mph</p>
-                <p>Humidity: {this.props.humidity}%</p>
+                {content}
             </div>
         );
     }
@@ -173,14 +196,28 @@ class Recommendations extends Component {
     }
 
     render() {
-        // Don't display if no data is returned
-        if (!this.props.weatherCondition) {
-            return null;
+        let formSubmitted = this.props.formSubmitted;
+        let dataLoaded = this.props.dataLoaded;
+        let content = null;
+
+        console.log("formSubmitted", formSubmitted);
+        console.log("dataLoaded", dataLoaded);
+
+        if ( formSubmitted ) {
+            content = <p>Loading recommendations...</p>;
+
+            if ( dataLoaded ) {
+                content = <div>
+                    <h2>Recommendations!</h2>
+                    <p>We recommend {this.state.recommendationOptions.sunny}!</p>
+                </div>;
+            }
+
         }
+
         return (
             <div>
-                <h2>Recommendations!</h2>
-                <p>We recommend {this.state.recommendationOptions.sunny}!</p>
+                {content}
             </div>
         );
     }
@@ -190,7 +227,7 @@ class WeatherTreatYourself extends Component {
     render() {
         return (
             <div className="App">
-                <h1>[Weather App Title]</h1>
+                <h1>Weather to Reward</h1>
                 <Location />
             </div>
         );
