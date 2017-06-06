@@ -97,6 +97,8 @@ class Location extends Component {
                         humidity: results.data.query.results.channel.atmosphere.humidity,
                         weatherCondition: results.data.query.results.channel.item.condition.text
                     });
+                })
+                .then(function() {
                     _this.setState({
                         feelsLike: Math.round(_this.getFeelsLikeTemp())
                     });
